@@ -6,9 +6,8 @@
   (:require [cheshire.core :as json]))
 
 (def treatments
-  [{:selector "#sign-up"
-    :treatment {:color "red"
-                :text  "Sign Up For Free!"}}])
+  {:color "red"
+   :text  "Sign Up For Free!"})
 
 (defn jsonp-response
   [body callback]
