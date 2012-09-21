@@ -38,8 +38,9 @@
   [{cookies :cookies {callback :callback} :params}]
   (if-let [{value :value} (cookies "treatment")]
     (jsonp-response (nth treatments (Integer. value)) callback)
-    (-> (jsonp-response (nth treatments (next-treatment)) callback)
-        (assoc-in [:cookies :treatment] treatment))))
+    (let [treatment (next-treatment)]
+      (-> (jsonp-response (nth treatments treatment) callback)
+          (assoc-in [:cookies :treatment] treatment)))))
 
 (defroutes api-routes
   (GET "/" req (get-treatment req)))
