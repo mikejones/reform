@@ -3,7 +3,7 @@
         [compojure.core :only [GET POST defroutes]]
         [ring.adapter.jetty :only [run-jetty]]
         [ring.middleware.cookies :only [wrap-cookies]]
-        [ring.util.response :only [response content-type]])
+        [ring.util.response :only [response content-type file-response header]])
   (:require [cheshire.core :as json]))
 
 (def treatments
@@ -13,6 +13,10 @@
     :text  "Sign Up!"}
    {:color "yellow"
     :text "DONT SIGN UP"}])
+
+(def state
+  (atom {:treated (vec (repeat (count treatments) 0))
+         :completed (vec (repeat (count treatments) 0))}))
 
 (let [next (atom (cycle (range (count treatments))))]
   (defn next-treatment
@@ -37,13 +41,27 @@
 (defn get-treatment
   [{cookies :cookies {callback :callback} :params}]
   (if-let [{value :value} (cookies "treatment")]
-    (jsonp-response (nth treatments (Integer. value)) callback)
+    (let [treatment (Integer. value)]
+      (jsonp-response (nth treatments treatment) callback))
     (let [treatment (next-treatment)]
+      (swap! state update-in [:treated treatment] inc)
       (-> (jsonp-response (nth treatments treatment) callback)
           (assoc-in [:cookies :treatment] treatment)))))
 
+(defn complete
+  [{cookies :cookies}]
+  (let [{value :value} (cookies "treatment")
+        treatment (Integer. value)]
+    (swap! state update-in [:completed treatment] inc))
+  (-> (file-response "blank.gif")
+      (content-type "image/gif")
+      (header "Cache-Control" "private, no-cache, no-cache = Set-Cookie, proxy-revalidate")
+      (header "Pragma" "no-cache")))
+
 (defroutes api-routes
-  (GET "/" req (get-treatment req)))
+  (GET "/" req (get-treatment req))
+  (GET "/blank.gif" req (complete req))
+  (GET "/state" [] (response (json/encode @state))))
 
 (def app (-> #'api-routes
              wrap-request-logging
