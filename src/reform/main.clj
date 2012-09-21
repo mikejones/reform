@@ -15,10 +15,17 @@
         response
         (content-type "application-json"))))
 
+(defn wrap-request-logging
+  [handler]
+  (fn [{:keys [uri query-string] :as req}]
+    (locking System/out (println "request" uri query-string))
+    (handler req)))
+
 (defroutes api-routes
   (GET "/" [jsonp] (jsonp-response treatments jsonp)))
 
 (def app (-> #'api-routes
+             wrap-request-logging
              api))
 
 (defn -main
