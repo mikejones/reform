@@ -50,13 +50,15 @@
 
 (defn complete
   [{cookies :cookies}]
-  (let [{value :value} (cookies "treatment")
-        treatment (Integer. value)]
-    (swap! state update-in [:completed treatment] inc))
+  (when-not (cookies "completed")
+    (let [{value :value} (cookies "treatment")
+          treatment (Integer. value)]
+      (swap! state update-in [:completed treatment] inc)))
   (-> (file-response "blank.gif")
       (content-type "image/gif")
       (header "Cache-Control" "private, no-cache, no-cache = Set-Cookie, proxy-revalidate")
-      (header "Pragma" "no-cache")))
+      (header "Pragma" "no-cache")
+      (assoc-in [:cookies :completed] true)))
 
 (defroutes api-routes
   (GET "/" req (get-treatment req))
