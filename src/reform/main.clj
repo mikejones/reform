@@ -9,8 +9,8 @@
   {})
 
 (defn jsonp-response
-  [body jsonp]
-  (let [body (str jsonp "(" (json/encode body) ");")]
+  [body callback]
+  (let [body (str callback "(" (json/encode body) ");")]
     (-> body    
         response
         (content-type "application-json"))))
@@ -22,7 +22,7 @@
     (handler req)))
 
 (defroutes api-routes
-  (GET "/" [jsonp] (jsonp-response treatments jsonp)))
+  (GET "/" [callback] (jsonp-response treatments callback)))
 
 (def app (-> #'api-routes
              wrap-request-logging
