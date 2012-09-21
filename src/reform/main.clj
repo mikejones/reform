@@ -8,15 +8,15 @@
 (def treatments
   {})
 
-(defn json-response
-  [body]
-  (-> body
-      json/encode
-      response
-      (content-type "application-json")))
+(defn jsonp-response
+  [body jsonp]
+  (let [body (str jsonp "(" (json/encode body) ");")]
+    (-> body    
+        response
+        (content-type "application-json"))))
 
 (defroutes api-routes
-  (GET "/" [] (json-response treatments)))
+  (GET "/" [jsonp] (jsonp-response treatments jsonp)))
 
 (def app (-> #'api-routes
              api))
